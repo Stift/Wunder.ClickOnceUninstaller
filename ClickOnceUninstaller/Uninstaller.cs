@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
 namespace Wunder.ClickOnceUninstaller
 {
@@ -43,7 +44,7 @@ namespace Wunder.ClickOnceUninstaller
 
         private List<string> FindComponentsToRemove(string token)
         {
-            var components = _registry.Components.Where(c => c.Key.Contains(token)).ToList();
+            var components = WhereKeyContains(_registry.Components, token);
 
             var toRemove = new List<string>();
             foreach (var component in components)
@@ -53,10 +54,10 @@ namespace Wunder.ClickOnceUninstaller
                 foreach (var dependency in component.Dependencies)
                 {
                     if (toRemove.Contains(dependency)) continue; // already in the list
-                    if (_registry.Components.All(c => c.Key != dependency)) continue; // not a public component
+                    if (NoKeyEquals(_registry.Components, dependency)) continue; // not a public component
 
-                    var mark = _registry.Marks.FirstOrDefault(m => m.Key == dependency);
-                    if (mark != null && mark.Implications.Any(i => components.All(c => c.Key != i.Name)))
+                    var mark = FirstOrDefaultByKey(_registry.Marks, dependency);
+                    if (mark != null && AnyNoKeyEquals(mark.Implications, components))
                     {
                         // don't remove because other apps depend on this
                         continue;
@@ -67,6 +68,47 @@ namespace Wunder.ClickOnceUninstaller
             }
 
             return toRemove;
+        }
+
+        private bool AnyNoKeyEquals(List<ClickOnceRegistry.Implication> implications, List<ClickOnceRegistry.Component> components)
+        {
+            foreach (var implication in implications)
+            {
+                if (NoKeyEquals(components, implication.Name))
+                    return true;
+            }
+            return false;
+        }
+
+        private ClickOnceRegistry.Mark FirstOrDefaultByKey(List<ClickOnceRegistry.Mark> marks, string dependency)
+        {
+            foreach (var mark in marks)
+            {
+                if (mark.Key == dependency)
+                    return mark;
+            }
+            return null;
+        }
+
+        private bool NoKeyEquals(List<ClickOnceRegistry.Component> components, string dependency)
+        {
+            foreach (var component in components)
+            {
+                if (component.Key == dependency)
+                    return false;
+            }
+            return true;
+        }
+
+        private List<ClickOnceRegistry.Component> WhereKeyContains(List<ClickOnceRegistry.Component> components, string token)
+        {
+            var res = new List<ClickOnceRegistry.Component>();
+            foreach (var component in components)
+            {
+                if (component.Key.Contains(token))
+                    res.Add(component);
+            }
+            return res;
         }
     }
 }

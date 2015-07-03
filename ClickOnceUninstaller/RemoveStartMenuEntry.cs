@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace Wunder.ClickOnceUninstaller
 {
@@ -33,13 +32,23 @@ namespace Wunder.ClickOnceUninstaller
             if (File.Exists(desktopShortcut)) _filesToRemove.Add(desktopShortcut);
 
             _foldersToRemove = new List<string>();
-            if (Directory.Exists(suiteFolder) && Directory.GetFiles(suiteFolder).All(d => _filesToRemove.Contains(d)))
+            if (Directory.Exists(suiteFolder) && AllContains(Directory.GetFiles(suiteFolder), _filesToRemove))
             {
                 _foldersToRemove.Add(suiteFolder);
 
-                if (Directory.GetDirectories(folder).Count() == 1 && !Directory.GetFiles(folder).Any())
+                if (Directory.GetDirectories(folder).Length == 1 && !(Directory.GetFiles(folder).Length > 0))
                     _foldersToRemove.Add(folder);
             }
+        }
+
+        private bool AllContains(string[] getFiles, List<string> list)
+        {
+            foreach (var file in getFiles)
+            {
+                if (!list.Contains(file))
+                    return false;
+            }
+            return true;
         }
 
         public void PrintDebugInformation()

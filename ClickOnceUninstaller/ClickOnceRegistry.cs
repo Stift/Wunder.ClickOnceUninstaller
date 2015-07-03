@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Microsoft.Win32;
 
@@ -32,7 +31,7 @@ namespace Wunder.ClickOnceUninstaller
                 Components.Add(component);
 
                 component.Dependencies = new List<string>();
-                foreach (var dependencyName in componentKey.GetSubKeyNames().Where(n => n != "Files"))
+                foreach (var dependencyName in WhereEquals(componentKey.GetSubKeyNames(), "Files"))
                 {
                     component.Dependencies.Add(dependencyName);
                 }
@@ -61,7 +60,7 @@ namespace Wunder.ClickOnceUninstaller
                 if (identity != null) mark.Identity = Encoding.ASCII.GetString(identity);
 
                 mark.Implications = new List<Implication>();
-                var implications = markKey.GetValueNames().Where(n => n.StartsWith("implication"));
+                var implications = WhereStartsWith(markKey.GetValueNames(), "implication");
                 foreach (var implicationName in implications)
                 {
                     var implication = markKey.GetValue(implicationName) as byte[];
@@ -73,6 +72,24 @@ namespace Wunder.ClickOnceUninstaller
                                                       Value = Encoding.ASCII.GetString(implication)
                                                   });
                 }
+            }
+        }
+
+        private IEnumerable<string> WhereStartsWith(IEnumerable<string> getValueNames, string implication)
+        {
+            foreach (var valueName in getValueNames)
+            {
+                if (valueName.StartsWith(implication))
+                    yield return valueName;
+            }
+        }
+
+        private IEnumerable<string> WhereEquals(IEnumerable<string> getValueNames, string equals)
+        {
+            foreach (var valueName in getValueNames)
+            {
+                if (valueName != equals)
+                    yield return valueName;
             }
         }
 

@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Win32;
 
 namespace Wunder.ClickOnceUninstaller
@@ -47,8 +47,8 @@ namespace Wunder.ClickOnceUninstaller
                 }
                 else
                 {
-                    var implications = mark.Implications.Where(i => componentsToRemove.Any(c => c == i.Name)).ToList();
-                    if (implications.Any())
+                    var implications = WhereContains(mark.Implications, componentsToRemove);
+                    if (implications.Count > 0)
                     {
                         var markKey = marksKey.OpenSubKey(mark.Key, true);
                         _disposables.Add(markKey);
@@ -72,6 +72,17 @@ namespace Wunder.ClickOnceUninstaller
             DeleteMatchingSubKeys(ApplicationsRegistryPath, token);
             DeleteMatchingSubKeys(FamiliesRegistryPath, token);
             DeleteMatchingSubKeys(VisibilityRegistryPath, token);
+        }
+
+        private List<ClickOnceRegistry.Implication> WhereContains(List<ClickOnceRegistry.Implication> implications, List<string> componentsToRemove)
+        {
+            var res = new List<ClickOnceRegistry.Implication>();
+            foreach (var implication in implications)
+            {
+                if (componentsToRemove.Contains(implication.Name))
+                    res.Add(implication);
+            }
+            return res;
         }
 
         private void DeleteMatchingSubKeys(string registryPath, string token)

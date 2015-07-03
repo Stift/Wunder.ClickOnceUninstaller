@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using Microsoft.Win32;
 
 namespace Wunder.ClickOnceUninstaller
@@ -55,9 +55,22 @@ namespace Wunder.ClickOnceUninstaller
 
         public string GetPublicKeyToken()
         {
-            var token = UninstallString.Split(',').First(s => s.Trim().StartsWith("PublicKeyToken=")).Substring(16);
+            var enumerator = WhereTrimStartsWith(UninstallString.Split(','), "PublicKeyToken=").GetEnumerator();
+            enumerator.MoveNext();
+
+            var token = enumerator.Current.Substring(16);
             if (token.Length != 16) throw new ArgumentException();
             return token;
         }
+
+        private IEnumerable<string> WhereTrimStartsWith(IEnumerable<string> getValueNames, string implication)
+        {
+            foreach (var valueName in getValueNames)
+            {
+                if (valueName.Trim().StartsWith(implication))
+                    yield return valueName;
+            }
+        }
+
     }
 }
